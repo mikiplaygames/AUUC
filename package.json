@@ -1,0 +1,14 @@
+{
+    "name": "com.mikiheaddev.auuc",
+    "displayName": "AUUC",
+    "version": "0.1",
+    "unity": "6000.1",
+    "description": "",
+    "keywords": ["core", "helpers", "utilities"],
+    "category": "Core",
+    "author": {
+        "name": "Mikolaj",
+        "email": "gajewskimikolaj00@gmail.com",
+        "url": "https://deezgames.eu/"
+    }
+}
