@@ -1,9 +1,9 @@
 {
     "name": "com.mikiheaddev.auuc",
     "displayName": "AUUC",
-    "version": "1.0.0",
-    "unity": "6000.1",
-    "description": "",
+    "version": "1.0.1",
+    "unity": "2022.1",
+    "description": "A collection of core helpers and utilities.",
     "keywords": ["core", "helpers", "utilities"],
     "category": "Core",
     "author": {
