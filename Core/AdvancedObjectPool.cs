@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using UnityEngine.Pool;
 namespace MikiHeadDev.Helpers
 {
@@ -21,24 +22,35 @@ public class AdvancedObjectPool<T> : IDisposable, IObjectPool<T> where T : class
     public int CountAll => CountActive + CountInactive;
     public int CountActive => a_List.Count;
     public int CountInactive => i_List.Count;
-
-    public AdvancedObjectPool(Func<T> createFunc, Action<T> actionOnGet = null, Action<T> actionOnRelease = null, Action<T> actionOnDestroy = null, bool collectionCheck = true, int defaultCapacity = 10, int maxSize = 10000)
+    public static AdvancedObjectPool<V> CreateDefaultPool<V>(GameObject prefab, Transform parent = null, int initialSize = 20, int maxSize = 100) where V : Component
     {
-        if (createFunc == null)
-            throw new ArgumentNullException("createFunc");
-
-        if (maxSize <= 0)
-            throw new ArgumentException("Max Size must be greater than 0", "maxSize");
-
-        i_List = new List<T>(defaultCapacity);
-        a_List = new List<T>(defaultCapacity);
-        m_CreateFunc = createFunc;
-        m_MaxSize = maxSize;
-        m_ActionOnGet = actionOnGet;
-        m_ActionOnRelease = actionOnRelease;
-        m_ActionOnDestroy = actionOnDestroy;
-        m_CollectionCheck = collectionCheck;
+        return new AdvancedObjectPool<V>(
+            () => UnityEngine.Object.Instantiate(prefab, parent).GetComponent<V>(),
+            obj => obj.gameObject.SetActive(true),
+            obj => obj.gameObject.SetActive(false),
+            obj => UnityEngine.Object.Destroy(obj.gameObject),
+            false,
+            initialSize,
+            maxSize
+        );    
     }
+    public AdvancedObjectPool(Func<T> createFunc, Action<T> actionOnGet = null, Action<T> actionOnRelease = null, Action<T> actionOnDestroy = null, bool collectionCheck = true, int defaultCapacity = 10, int maxSize = 10000)
+        {
+            if (createFunc == null)
+                throw new ArgumentNullException("createFunc");
+
+            if (maxSize <= 0)
+                throw new ArgumentException("Max Size must be greater than 0", "maxSize");
+
+            i_List = new List<T>(defaultCapacity);
+            a_List = new List<T>(defaultCapacity);
+            m_CreateFunc = createFunc;
+            m_MaxSize = maxSize;
+            m_ActionOnGet = actionOnGet;
+            m_ActionOnRelease = actionOnRelease;
+            m_ActionOnDestroy = actionOnDestroy;
+            m_CollectionCheck = collectionCheck;
+        }
 
     public T Get()
     {
@@ -91,10 +103,12 @@ public class AdvancedObjectPool<T> : IDisposable, IObjectPool<T> where T : class
         {
             foreach (T item in i_List)
             {
+                if (item == null) continue;
                 m_ActionOnDestroy(item);
             }
             foreach (T item in a_List)
             {
+                if (item == null) continue;
                 m_ActionOnDestroy(item);
             }
         }

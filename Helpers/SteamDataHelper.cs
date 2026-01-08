@@ -1,5 +1,5 @@
 using MikiHeadDev.Core.Singletons;
-#if !DISABLESTEAMWORKS
+#if STEAMWORKS && !DISABLESTEAMWORKS
 using Steamworks;
 #endif
 namespace MikiHeadDev.Helpers.Steamworks
@@ -8,7 +8,7 @@ namespace MikiHeadDev.Helpers.Steamworks
     {
         public static void IncrementStat(string statName, int increment = 1)
         {
-#if !DISABLESTEAMWORKS
+#if STEAMWORKS && !DISABLESTEAMWORKS
             if (!SteamManager.Initialized) return;
             SteamUserStats.GetStat(statName, out int statValue);
             SteamUserStats.SetStat(statName, statValue + increment);
@@ -17,7 +17,7 @@ namespace MikiHeadDev.Helpers.Steamworks
         }
         public static bool SetStat(string statName, int value)
         {
-#if !DISABLESTEAMWORKS
+#if STEAMWORKS && !DISABLESTEAMWORKS
             if (!SteamManager.Initialized) return false;
             var answer = SteamUserStats.SetStat(statName, value);
             SteamUserStats.StoreStats();
@@ -29,7 +29,7 @@ namespace MikiHeadDev.Helpers.Steamworks
         public static bool GetStat(string statName, out int value)
         {
             value = 0;
-#if !DISABLESTEAMWORKS
+#if STEAMWORKS && !DISABLESTEAMWORKS
             if (!SteamManager.Initialized) return false;
             return SteamUserStats.GetStat(statName, out value);
 #else
@@ -38,7 +38,7 @@ namespace MikiHeadDev.Helpers.Steamworks
         }
         public static void UnlockAchievement(string achievementName)
         {
-#if !DISABLESTEAMWORKS
+#if STEAMWORKS && !DISABLESTEAMWORKS
             if (!SteamManager.Initialized) return;
             SteamUserStats.SetAchievement(achievementName);
             SteamUserStats.StoreStats();

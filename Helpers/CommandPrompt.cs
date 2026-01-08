@@ -1,3 +1,4 @@
+#if CONSOLE_COMMANDS
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -244,3 +245,4 @@ public class CommandPrompt : MonoBehaviour
 #endregion
 }
 }
+#endif

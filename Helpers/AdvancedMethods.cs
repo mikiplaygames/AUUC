@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = System.Random;
@@ -7,7 +6,25 @@ namespace MikiHeadDev.Helpers
 {
     public static class AdvancedMethods
     {
-        public static readonly Vector3 SideMirror = new(-1,1,1);
+        public static readonly Vector3 SideMirror = new(-1, 1, 1);
+        
+        public static float Loop(float value, float min, float max)
+        {
+            if (max < min)(min, max) = (max, min);
+
+            float length = max - min;
+            // Mathf.Repeat wraps t in [0, length)
+            return Mathf.Repeat(value - min, length) + min;
+        }
+        public static int Loop(int value, int min, int max)
+        {
+            if (max < min) (min, max) = (max, min);
+
+            int length = max - min;
+            int mod = (value - min) % length;
+            if (mod < 0) mod += length; // ensure positive result for negatives
+            return min + mod;
+        }
         public static Color GetAvgColorFromSprite(Sprite sprite)
         {
             Color supposedColor = Color.white;
@@ -21,7 +38,8 @@ namespace MikiHeadDev.Helpers
 
                 supposedColor /= colors.Length;
                 supposedColor.a = 1;
-            }catch{supposedColor = Color.gray;}
+            }
+            catch { supposedColor = Color.gray; }
 
             return supposedColor;
         }
@@ -68,10 +86,10 @@ namespace MikiHeadDev.Helpers
                     list.Add(default);
             }
         }
-        
         public static Vector3 GetPositionOnCircle(float angle, float radius)
         {
             return new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0);
         }
+
     }
 }
