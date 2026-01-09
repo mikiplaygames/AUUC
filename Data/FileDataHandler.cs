@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.IO;
 using System;
-using System.Linq;
 
 public class FileDataHandler<T> {
     protected string dataPath;
