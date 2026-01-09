@@ -3,6 +3,8 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
+namespace MikiHeadDev.Core.Data
+{
 public class GameDataManager<T> where T : new()
 {
     private static T gameData;
@@ -87,4 +89,4 @@ public class GameDataManager<T> where T : new()
     {
         sceneDataPersistentObjects = SceneManager.GetActiveScene().GetRootGameObjects().SelectMany(go => go.GetComponentsInChildren<IDataPersistence<T>>(true));
     }
-}
+}}
