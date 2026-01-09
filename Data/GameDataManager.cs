@@ -5,19 +5,19 @@ using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 namespace MikiHeadDev.Core.Data
 {
-public class GameDataManager<T> where T : new()
+public class GameDataManager
 {
-    private static T gameData;
-    private static FileDataHandler<T> dataHandler;
-    private static IEnumerable<IDataPersistence<T>> sceneDataPersistentObjects;
-    public readonly static List<IDataPersistence<T>> offSceneDataPersistentObjects = new();
+    private static GameData gameData;
+    private static FileDataHandler<GameData> dataHandler;
+    private static IEnumerable<IDataPersistence<GameData>> sceneDataPersistentObjects;
+    public readonly static List<IDataPersistence<GameData>> offSceneDataPersistentObjects = new();
     
-    public static UnityEvent<T> OnDataLoaded = new();
-    public static UnityEvent<T> OnDataSaved = new();
+    public static UnityEvent<GameData> OnDataLoaded = new();
+    public static UnityEvent<GameData> OnDataSaved = new();
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
     {
-        dataHandler = new FileDataHandler<T>(Application.persistentDataPath, "gameData.json");
+        dataHandler = new FileDataHandler<GameData>(Application.persistentDataPath, "gameData.json");
         SceneManager.sceneLoaded += SceneLoaded;
     }
     private static void SceneLoaded(Scene sc, LoadSceneMode loadSceneMode)
@@ -26,7 +26,7 @@ public class GameDataManager<T> where T : new()
     }
     public static void NewGame()
     {
-        gameData = new T();
+        gameData = new GameData();
         dataHandler.Save(gameData);
     }
     public static void LoadGame()
@@ -39,31 +39,31 @@ public class GameDataManager<T> where T : new()
             NewGame();
         
         var objectsToSave = sceneDataPersistentObjects.Concat(offSceneDataPersistentObjects);
-        foreach (IDataPersistence<T> dataPersistenceObject in objectsToSave)
+        foreach (IDataPersistence<GameData> dataPersistenceObject in objectsToSave)
         {
             dataPersistenceObject.LoadData(gameData);
         }
         OnDataLoaded?.Invoke(gameData);
     }
-    public static T RetrieveSavedGameData()
+    public static GameData RetrieveSavedGameData()
     {
         gameData ??= dataHandler.Load();
         return gameData;
     }
-    public static T RetrieveCurrentGameData()
+    public static GameData RetrieveCurrentGameData()
     {
         RefreshSceneDataPersistenceObjects();
 
         gameData = new();
 
         var objectsToSave = sceneDataPersistentObjects.Concat(offSceneDataPersistentObjects);
-        foreach (IDataPersistence<T> dataPersistenceObject in objectsToSave)
+        foreach (IDataPersistence<GameData> dataPersistenceObject in objectsToSave)
         {
             dataPersistenceObject.SaveData(gameData);
         }
         return gameData;
     }
-    public static void AlterSavedGameData(T gameData)
+    public static void AlterSavedGameData(GameData gameData)
     {
         dataHandler.Save(gameData);
     }
@@ -74,7 +74,7 @@ public class GameDataManager<T> where T : new()
         gameData = new();
 
         var objectsToSave = sceneDataPersistentObjects.Concat(offSceneDataPersistentObjects);
-        foreach (IDataPersistence<T> dataPersistenceObject in objectsToSave)
+        foreach (IDataPersistence<GameData> dataPersistenceObject in objectsToSave)
         {
             dataPersistenceObject.SaveData(gameData);
         }
@@ -87,6 +87,6 @@ public class GameDataManager<T> where T : new()
     }
     private static void RefreshSceneDataPersistenceObjects()
     {
-        sceneDataPersistentObjects = SceneManager.GetActiveScene().GetRootGameObjects().SelectMany(go => go.GetComponentsInChildren<IDataPersistence<T>>(true));
+        sceneDataPersistentObjects = SceneManager.GetActiveScene().GetRootGameObjects().SelectMany(go => go.GetComponentsInChildren<IDataPersistence<GameData>>(true));
     }
 }}
