@@ -56,26 +56,3 @@ public class FileDataHandler<T> {
         }
     }
 }
-public class GameDataHandler : FileDataHandler<GameData>
-{
-    public GameDataHandler() : base(Application.persistentDataPath, $"save.save") { }
-    public void DeleteAllData()
-    {
-        try
-        {
-            var records = Directory.GetFiles(dataPath);
-            var logExcluded = records.ToList();
-
-            logExcluded.RemoveAll(x => x.Contains("log"));
-
-            foreach (var record in logExcluded)
-            {
-                File.Delete(record);
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogError("Failed to delete all data: " + e.Message);
-        }
-    }
-}
