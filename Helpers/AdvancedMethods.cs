@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using Random = System.Random;
 
 namespace MikiHeadDev.Helpers
@@ -7,7 +8,16 @@ namespace MikiHeadDev.Helpers
     public static class AdvancedMethods
     {
         public static readonly Vector3 SideMirror = new(-1, 1, 1);
-        
+        public static bool IsOverUI(Vector2 mousePosition)
+        {
+            var pointerEvent = new PointerEventData(EventSystem.current) { position = mousePosition };
+            var results = new List<RaycastResult>();
+
+            EventSystem.current.RaycastAll(pointerEvent, results);
+
+            // check && return only first hit
+            return results.Count > 0 && results[0].gameObject.layer == LayerMask.NameToLayer("UI");
+        }
         public static float Loop(float value, float min, float max)
         {
             if (max < min)(min, max) = (max, min);
