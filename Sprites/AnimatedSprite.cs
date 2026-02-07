@@ -87,11 +87,21 @@ public abstract class AnimatedSprite : MonoBehaviour
     }
     private IEnumerator AnimateSprite()
     {
-        float timePassed = 0;
         while (CurrentFrame < spriteList.Length && CurrentFrame >= 0)
         {
             SetSprite(CurrentFrame);
+
+            float timePassed = 0f;
+            float frameDuration = spriteList.Frames[CurrentFrame].duration;
+
+            while (timePassed < frameDuration)
+            {
+                timePassed += Time.deltaTime;
+                yield return null;
+            }
+
             CurrentFrame += animDirection;
+
             if (spriteList.Loop)
             {
                 if (CurrentFrame >= spriteList.Length)
@@ -99,22 +109,19 @@ public abstract class AnimatedSprite : MonoBehaviour
                 else if (CurrentFrame < 0)
                     CurrentFrame = spriteList.Length - 1;
             }
-            else if (CurrentFrame >= spriteList.Length || CurrentFrame <= -1)
+            else if (CurrentFrame >= spriteList.Length || CurrentFrame < 0)
             {
                 currentAnimationCoroutine = null;
+
                 if (animDirection == 1)
                     OnAnimationFinished.Invoke();
                 else
                     OnReverseAnimationFinished.Invoke();
+
                 yield break;
             }
-            while (timePassed < spriteList.Frames[CurrentFrame].duration)
-            {
-                timePassed += Time.deltaTime;
-                yield return null;
-            }
-            timePassed -= spriteList.Frames[CurrentFrame].duration;
         }
+
         currentAnimationCoroutine = null;
     }
     public void SetSprite(int index)
