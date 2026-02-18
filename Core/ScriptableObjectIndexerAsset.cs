@@ -7,7 +7,7 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
 {
     [SerializeField] private bool refresh;
     [SerializeField] private SerializableDictionary<int, AdvancedScriptableObject> MainIdsObjects;
-    [SerializeField] private SerializableDictionary<Type, List<AdvancedScriptableObject>> SortedByTypeObjects;
+    [SerializeField] private SerializableDictionary<string, List<AdvancedScriptableObject>> SortedByTypeObjects;
     public const string Path = "Assets/Resources/DoNotMoveThisFile.asset"; //todo DO NOT MOVE THIS FILE
     public const string FileName = "DoNotMoveThisFile";
     [SerializeField] string currentPathCheck;
@@ -97,7 +97,7 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
 
         foreach (var obj in allOrganizedObjects)
         {
-            Type type = obj.GetType();
+            string type = obj.GetType().ToString();
             if (!SortedByTypeObjects.ContainsKey(type))
             {
                 if (type == null)
@@ -132,8 +132,9 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
         }
     }
 
-    IEnumerable<Type> TopologicalSortByInheritance(IEnumerable<Type> types)
+    IEnumerable<string> TopologicalSortByInheritance(IEnumerable<string> stringTypes)
     {
+        var types = stringTypes.Select(s => Type.GetType(s)).Where(t => t != null).ToList();
         var typeSet = new HashSet<Type>(types);
         var children = new Dictionary<Type, List<Type>>();
         foreach (var t in types)
@@ -165,7 +166,7 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
 
         // Reverse to get base classes first, then derived
         result.Reverse();
-        return result;
+        return result.Select(t => t.ToString());
     }
 #endif
 }
