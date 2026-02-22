@@ -17,6 +17,6 @@ public static class ScriptableObjectIndexer
     {
         _indexer = Resources.Load<ScriptableObjectIndexerAsset>(ScriptableObjectIndexerAsset.FileName);
     }
-    public static T GetObject<T>(int id) where T : ScriptableObject => Indexer.GetObject<T>(id);
-    public static int GetIdOfObject<T>(T obj) where T : ScriptableObject => Indexer.GetIdOfObject(obj);
+    public static T GetObject<T>(int id) where T : AdvancedScriptableObject => Indexer.GetObject<T>(id);
+    public static int GetIdOfObject<T>(T obj) where T : AdvancedScriptableObject => Indexer.GetIdOfObject(obj);
 }

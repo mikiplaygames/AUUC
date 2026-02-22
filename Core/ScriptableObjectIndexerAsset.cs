@@ -2,32 +2,28 @@ using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 using System;
+using UnityEditor;
 
 public class ScriptableObjectIndexerAsset : ScriptableObject
 {
-    [SerializeField] private bool refresh;
+    [SerializeField] private SerializableDictionary<string, int> TypeStartingIds;
     [SerializeField] private SerializableDictionary<int, AdvancedScriptableObject> MainIdsObjects;
-    [SerializeField] private SerializableDictionary<string, List<AdvancedScriptableObject>> SortedByTypeObjects;
     public const string Path = "Assets/Resources/DoNotMoveThisFile.asset"; //todo DO NOT MOVE THIS FILE
     public const string FileName = "DoNotMoveThisFile";
-    [SerializeField] string currentPathCheck;
-    [Header("DO NOT CLICK BOTH")]
-    [SerializeField] private bool remove;
-    [SerializeField] private bool actuallyRemove;
-    public T GetObject<T>(int id) where T : ScriptableObject
+    public T GetObject<T>(int id) where T : AdvancedScriptableObject
     {
         if (MainIdsObjects.TryGetValue(id, out var obj) && obj is T)
             return obj as T;
         return null;
     }
-    public int GetIdOfObject<T>(T obj) where T : ScriptableObject
+    public int GetIdOfObject<T>(T obj) where T : AdvancedScriptableObject
     {
         foreach (var kvp in MainIdsObjects)
         {
             if (kvp.Value.Equals(obj))
                 return kvp.Key;
         }
-        return default; //todo ??? nie lepiej dac -1 sie upewnic czeba
+        return default;
     }
     public int GetIdOfObjectByName(string name)
     {
@@ -36,105 +32,170 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
             if (kvp.Value.name.Equals(name))
                 return kvp.Key;
         }
-        return -1;
+        return default;
     }
-    public List<T> GetObjectsOfType<T>() where T : ScriptableObject
+    public List<T> GetObjectsOfType<T>() where T : AdvancedScriptableObject
     {
         return MainIdsObjects.Values.OfType<T>().ToList();
     }
 #if UNITY_EDITOR
-    private void OnValidate()
+    void OnValidate()
     {
-        if (actuallyRemove && !remove)
-            actuallyRemove = false;
-        if (remove && actuallyRemove)
-        {
-            MainIdsObjects.Clear();
-            remove = false;
-            actuallyRemove = false;
+        if (!IsPathCorrect())
             return;
-        }
-
-        if (!PathIsCorrect())
-            return;
-        refresh = false;
-        CheckForListChanges();
     }
-    private bool PathIsCorrect()
+    private bool IsPathCorrect()
     {
-        currentPathCheck = UnityEditor.AssetDatabase.GetAssetPath(this);
+        var currentPathCheck = AssetDatabase.GetAssetPath(this);
         if (currentPathCheck != Path)
         {
             name = FileName;
-            Debug.LogError($"FILE PATH IS WRONG IN CONST!!!! current: {currentPathCheck} != supposed: {Path} \n FIXING IT NOW....");
+            Debug.LogError($"{this} file is not in right dir! current: {currentPathCheck} != supposed: {Path} \n FIXING IT NOW....");
             string directory = System.IO.Path.GetDirectoryName(Path);
             if (!System.IO.Directory.Exists(directory))
                 System.IO.Directory.CreateDirectory(directory);
-            UnityEditor.AssetDatabase.MoveAsset(currentPathCheck, Path);
-            UnityEditor.AssetDatabase.SaveAssets();
-            UnityEditor.AssetDatabase.Refresh();
-            currentPathCheck = UnityEditor.AssetDatabase.GetAssetPath(this);
+            AssetDatabase.MoveAsset(currentPathCheck, Path);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            currentPathCheck = AssetDatabase.GetAssetPath(this);
             return currentPathCheck == Path;
         }
         else
             return true;
     }
-    bool MainIsEqual(IEnumerable<AdvancedScriptableObject> allOrganizedObjects) => MainIdsObjects.Values.OrderBy(x => x.name).SequenceEqual(allOrganizedObjects);
-    private void CheckForListChanges()
+    private IEnumerable<AdvancedScriptableObject> GetAllObjects() => Resources.FindObjectsOfTypeAll<AdvancedScriptableObject>();
+    private IEnumerable<AdvancedScriptableObject> GetAllSortedObjects() => GetAllObjects().OrderBy(x => x.name);
+    private IEnumerable<Type> GetAllSortedTypes() => TopologicalSortByInheritance(GetAllObjects().Select(x => x.GetType()).Where(t => t != null).Distinct());
+    private Dictionary<Type, List<AdvancedScriptableObject>> GetObjectsSortedByType()
     {
-        if (refresh)
+        var allSortedObjs = GetAllSortedObjects();
+        Dictionary<Type, List<AdvancedScriptableObject>> SortedByTypeObjects = new();
+        foreach (var obj in allSortedObjs)
         {
-            refresh = false;
-            return;
-        }
-        var allOrganizedObjects = Resources.FindObjectsOfTypeAll<AdvancedScriptableObject>().OrderBy(x => x.name);
-
-        if (MainIsEqual(allOrganizedObjects))
-        {
-            //Debug.Log("Scriptable object list did not change, no update needed.");
-            return;
-        }
-
-        foreach (var obj in allOrganizedObjects)
-        {
-            string type = obj.GetType().ToString();
-            if (!SortedByTypeObjects.ContainsKey(type))
+            Type type = obj.GetType();
+            if (type == null)
             {
-                if (type == null)
-                {
-                    Debug.LogError("Type is null for object: " + obj.name);
-                    Debug.LogError("This is broken check your scriptable objects");
-                    continue;
-                }
-                SortedByTypeObjects.Add(type, new List<AdvancedScriptableObject>());
+                Debug.LogError("Type is null for object: " + obj.name);
+                Debug.LogError("This is broken check your scriptable objects, skipping...");
+                continue;
             }
+            if (!SortedByTypeObjects.ContainsKey(type))
+                SortedByTypeObjects.Add(type, new List<AdvancedScriptableObject>());
             if (!SortedByTypeObjects[type].Contains(obj))
                 SortedByTypeObjects[type].Add(obj);
         }
         SortedByTypeObjects = new(TopologicalSortByInheritance(SortedByTypeObjects.Keys).ToDictionary(t => t, t => SortedByTypeObjects[t]));
-
-        RegenerateMainDict();
+        return SortedByTypeObjects;
     }
-    void RegenerateMainDict()
+    public IEnumerable<AdvancedScriptableObject> GetAllUnIdiedObjects() => GetAllSortedObjects().Where(x => x.Id == 0);
+    public IEnumerable<AdvancedScriptableObject> GetAllUnlistedObjects()
     {
-        MainIdsObjects.Clear();
-        int typeIndex = 0;
-        int objectIndex = 0;
-        foreach (var kvp in SortedByTypeObjects)
+        var allObjs = GetAllSortedObjects();
+        var listedObjs = MainIdsObjects.Values.ToHashSet();
+        return allObjs.Where(x => !listedObjs.Contains(x));
+    }
+    public IEnumerable<int> GetNulls() => MainIdsObjects.Where(x => x.Value == null).Select(x => x.Key);
+    public void RemoveNulls()
+    {
+        var nullKeys = GetNulls().ToList();
+        foreach (var key in nullKeys)
+            MainIdsObjects.Remove(key);
+    }
+    public IEnumerable<AdvancedScriptableObject> GetDupes()
+    {
+        var allAssets = Resources
+            .FindObjectsOfTypeAll<AdvancedScriptableObject>()
+            .Where(x => x != null)
+            .ToList();
+
+        return allAssets
+            .GroupBy(x => x.Id)
+            .Where(g => g.Count() > 1)
+            .SelectMany(g => g);
+    }
+    public void RegenerateAllDictIds()
+    {
+        SerializableDictionary<int, AdvancedScriptableObject> tempDict = new();
+        foreach (var item in MainIdsObjects)
+        {
+            if (item.Value == null) continue;
+            tempDict.Add(item.Value.Id, item.Value);
+        }
+        MainIdsObjects = new(tempDict.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value));
+    }
+    public void UpdateTypesBaseIds_SOFT()
+    {
+        var types = GetAllSortedTypes();
+        types.Where(t => !TypeStartingIds.ContainsKey(t.FullName)).ToList().ForEach(t =>
+        {
+            int newBaseId = TypeStartingIds.Values.Count > 0 ? TypeStartingIds.Values.Max() + 1000 : 1;
+            TypeStartingIds.Add(t.FullName, newBaseId);
+        });
+        TypeStartingIds.Where(kvp => !types.Any(t => t.FullName == kvp.Key)).Select(kvp => kvp.Key).ToList().ForEach(key =>
+        {
+            TypeStartingIds.Remove(key);
+        });
+    }
+    public void RegenerateTypesBaseIds_HARD()
+    {
+        var types = GetAllSortedTypes();
+        TypeStartingIds = new();
+        int baseStartId = 0;
+        foreach (var type in types)
+        {
+            TypeStartingIds[type.FullName] = baseStartId;
+            baseStartId += 1000;
+        }
+    }
+    public void UpdateMainDict_SOFT()
+    {
+        UpdateTypesBaseIds_SOFT();
+        SerializableDictionary<int, AdvancedScriptableObject> tempNewDict = new(MainIdsObjects);
+        var allNewFoundObjects = GetObjectsSortedByType();
+        
+        foreach (var kvp in allNewFoundObjects)
         {
             foreach (var obj in kvp.Value)
             {
-                MainIdsObjects.Add(typeIndex * 1000 + objectIndex, obj);
+                if (!tempNewDict.ContainsValue(obj))
+                {
+                    int newId = obj.Id != 0 ? obj.Id : kvp.Value.Count > 0 ? kvp.Value.Max(x => x.Id) + 1 : 1;
+                    if (tempNewDict.TryGetValue(newId, out var val))
+                    {
+                        Debug.Log($"ID conflict for object {obj.name} with ID {newId} already used by {val.name}. Use \"Check For Unlisted Objects\" function in the indexer");
+                        continue;
+                    }
+                    tempNewDict.Add(newId, obj);
+                    if (obj.Id == newId) continue;
+                    obj.SetNewId(newId);
+                    EditorUtility.SetDirty(obj);
+                }
+            }
+        }
+        MainIdsObjects = new(tempNewDict.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value));
+    }
+    public void RegenerateMainDict_HARD()
+    {
+        RegenerateTypesBaseIds_HARD();
+        MainIdsObjects.Clear();
+        int objectIndex = 1;
+        var objs = GetObjectsSortedByType();
+        foreach (var kvp in objs)
+        {
+            foreach (var obj in kvp.Value)
+            {
+                var id = TypeStartingIds[kvp.Key.FullName] + objectIndex;
+                obj.SetNewId(id);
+                EditorUtility.SetDirty(obj);
+                MainIdsObjects.Add(id, obj);
                 objectIndex++;
             }
-            objectIndex = 0;
-            typeIndex++;
+            objectIndex = 1;
         }
     }
-
-    IEnumerable<string> TopologicalSortByInheritance(IEnumerable<string> stringTypes)
+    IEnumerable<Type> TopologicalSortByInheritance(IEnumerable<Type> stringTypes)
     {
-        var types = stringTypes.Select(s => Type.GetType(s)).Where(t => t != null).ToList();
+        var types = stringTypes.Where(t => t != null).ToList();
         var typeSet = new HashSet<Type>(types);
         var children = new Dictionary<Type, List<Type>>();
         foreach (var t in types)
@@ -166,7 +227,7 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
 
         // Reverse to get base classes first, then derived
         result.Reverse();
-        return result.Select(t => t.ToString());
+        return result;
     }
 #endif
 }
