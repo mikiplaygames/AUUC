@@ -8,9 +8,9 @@ public class AdvancedScriptableObject : ScriptableObject , IIdentify {
 [Serializable]
 public class ASOSerializer<T> : IIdentify , ISerializationCallbackReceiver where T : AdvancedScriptableObject
 {
-    [NonSerialized]private T _value;
+    [NonSerialized]private T _value;public T Value => _value;
     public int Id => ASOid;
-    public int ASOid;
+    [SerializeField]private int ASOid;
     public ASOSerializer(T newValue)
     {
         _value = newValue;
@@ -30,6 +30,5 @@ public class ASOSerializer<T> : IIdentify , ISerializationCallbackReceiver where
         if (_value == null || _value.Id != ASOid)            
             _value = ScriptableObjectIndexer.GetObject<T>(ASOid);
     }
-    public static implicit operator T(ASOSerializer<T> serializer) => serializer._value;
     public static implicit operator ASOSerializer<T>(T value) => new(value);
 }
