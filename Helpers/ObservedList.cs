@@ -5,6 +5,8 @@ public class ObservedList<T> : List<T>
 {
     public UnityEvent OnListChanged = new();
     public UnityEvent<int> OnListElementChanged = new();
+    public ObservedList() : base() { }
+    public ObservedList(int capacity) : base(capacity) { }
     public new void Add(T item)
     {
         base.Add(item);
