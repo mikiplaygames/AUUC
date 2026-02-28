@@ -5,10 +5,11 @@ using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 namespace MikiHeadDev.Core.Data
 {
+public class GameDataHandler : FileDataHandler<GameData>{public GameDataHandler() : base(Application.persistentDataPath, "gameData.json"){}}
 public class GameDataManager
 {
     private static GameData gameData;
-    private static FileDataHandler<GameData> dataHandler;
+    private static GameDataHandler dataHandler;
     private static IEnumerable<IDataPersistence<GameData>> sceneDataPersistentObjects;
     public readonly static List<IDataPersistence<GameData>> offSceneDataPersistentObjects = new();
     
@@ -17,7 +18,7 @@ public class GameDataManager
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
     {
-        dataHandler = new FileDataHandler<GameData>(Application.persistentDataPath, "gameData.json");
+        dataHandler = new GameDataHandler();
         SceneManager.sceneLoaded += SceneLoaded;
     }
     private static void SceneLoaded(Scene sc, LoadSceneMode loadSceneMode)
