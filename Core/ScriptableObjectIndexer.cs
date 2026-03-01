@@ -12,7 +12,7 @@ public static class ScriptableObjectIndexer
             return _indexer;
         }
     }
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
     public static void Initialization()
     {
         _indexer = Resources.Load<ScriptableObjectIndexerAsset>(ScriptableObjectIndexerAsset.FileName);
