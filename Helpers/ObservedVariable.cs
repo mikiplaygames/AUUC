@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine.Events;
-
+[System.Serializable]
 public class ObservedVariable<T>
 {
-    public UnityEvent<T> OnValueChanged = new();
-    private T _value;
+    [System.NonSerialized]public UnityEvent<T> OnValueChanged = new();
+    [UnityEngine.SerializeField]private T _value;
 
     public ObservedVariable(T initialValue = default)
     {
