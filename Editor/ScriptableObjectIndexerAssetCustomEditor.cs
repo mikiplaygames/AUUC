@@ -30,6 +30,7 @@ public class ScriptableObjectIndexerAssetCustomEditor : Editor {
             var result = EditorUtility.DisplayDialog($"{unIdiedCount} UnId-ied Objects Detected", message, "Regenerate IDs", "Cancel");
             if (result)
             {
+                indexer.UpdateTypesBaseIds_SOFT();
                 indexer.UpdateMainDict_SOFT();
                 EditorUtility.SetDirty(indexer);
             }

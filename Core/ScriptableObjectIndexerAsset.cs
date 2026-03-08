@@ -159,7 +159,7 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
             {
                 if (!tempNewDict.ContainsValue(obj))
                 {
-                    int newId = obj.Id != 0 ? obj.Id : kvp.Value.Count > 0 ? kvp.Value.Max(x => x.Id) + 1 : 1;
+                    int newId = obj.Id != 0 ? obj.Id : kvp.Value.Sum(x => x.Id) > 0 ? kvp.Value.Max(x => x.Id) + 1 : TypeStartingIds[kvp.Key.FullName] + 1;
                     if (tempNewDict.TryGetValue(newId, out var val))
                     {
                         Debug.Log($"ID conflict for object {obj.name} with ID {newId} already used by {val.name}. Use \"Check For Unlisted Objects\" function in the indexer");
