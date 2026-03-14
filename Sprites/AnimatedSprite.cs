@@ -128,6 +128,10 @@ public abstract class AnimatedSprite : MonoBehaviour
     {
         sprite = spriteList.Frames[index].sprite;
     }
+    public void SetSprite(Sprite newSprite)
+    {
+        sprite = newSprite;
+    }
     public void ResetSprite()
     {
         sprite = spriteList.Frames[0].sprite;
