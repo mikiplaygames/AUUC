@@ -23,7 +23,8 @@ public class GameDataManager
     }
     private static void SceneLoaded(Scene sc, LoadSceneMode loadSceneMode)
     {
-        LoadGame();
+        if (ConfigManager.ConfigLoaded)
+            LoadGame();
     }
     public static void NewGame()
     {
