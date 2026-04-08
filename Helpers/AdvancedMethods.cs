@@ -94,6 +94,30 @@ namespace MikiHeadDev.Helpers
                     list.Add(default);
             }
         }
+        public static HashSet<int> GenerateRandomHashSet(int count, int max, int min = 0)
+        {
+            var rng = new Random();
+            HashSet<int> returnedValues = new(count);
+            for (int i = 0; i < count; i++)
+                returnedValues.Add(rng.Next(min, max));
+            return returnedValues;
+        }
+        public static HashSet<int> GenerateRandomHashSetNoDupes(int count, int maxInt, int startInt = 0)
+        {
+            if (count > maxInt - startInt) throw new System.ArgumentException("Count can't be bigger than the range of numbers");
+            var rng = new Random();
+            HashSet<int> returnedValues = new(count);
+            List<int> usePossible = new(count);
+            for (int i = startInt; i < maxInt; i++)
+                usePossible.Add(i);
+            for (int i = 0; i < count; i++)
+            {
+                int index = rng.Next(0, usePossible.Count);
+                returnedValues.Add(usePossible[index]);
+                usePossible.Remove(index);
+            }
+            return returnedValues;
+        }
         public static Vector3 GetPositionOnCircle(float angle, float radius)
         {
             return new Vector3(Mathf.Cos(angle) * radius, Mathf.Sin(angle) * radius, 0);
