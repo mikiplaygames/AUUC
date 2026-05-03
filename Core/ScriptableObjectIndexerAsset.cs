@@ -39,6 +39,18 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
         return MainIdsObjects.Values.OfType<T>().ToList();
     }
 #if UNITY_EDITOR
+    public static void TryCreateAsset()
+    {
+        var asset = AssetDatabase.LoadAssetAtPath<ScriptableObjectIndexerAsset>(Path);
+        if (asset == null)
+        {
+            asset = CreateInstance<ScriptableObjectIndexerAsset>();
+            AssetDatabase.CreateAsset(asset, Path);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("Created ScriptableObjectIndexerAsset at " + Path);
+        }
+    }
     void OnValidate()
     {
         if (!IsPathCorrect())

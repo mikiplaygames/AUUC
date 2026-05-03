@@ -4,6 +4,11 @@ namespace MikiHeadDev.Helpers.Editor
 {
     public class ScriptableObjectIndexerAssetManipulator : EditorWindow
     {
+        [MenuItem("SO Indexer/Initialize DONOTMOVE...", priority = 8)]
+        private static void InitializeObject()
+        {
+            ScriptableObjectIndexerAsset.TryCreateAsset();
+        }
         [MenuItem("SO Indexer/Check For Nulls", priority = 1)]
         private static void CheckForNulls()
         {
