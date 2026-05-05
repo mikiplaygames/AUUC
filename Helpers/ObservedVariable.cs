@@ -5,12 +5,11 @@ public class ObservedVariable<T>
 {
     [System.NonSerialized]public UnityEvent<T> OnValueChanged = new();
     [UnityEngine.SerializeField]private T _value;
-
+    public void _QuietSetValue(T newValue) => _value = newValue;
     public ObservedVariable(T initialValue = default)
     {
         _value = initialValue;
     }
-
     public T Value
     {
         get => _value;
@@ -23,6 +22,5 @@ public class ObservedVariable<T>
             }
         }
     }
-
     public static implicit operator T(ObservedVariable<T> observedVariable) => observedVariable.Value;
 }
