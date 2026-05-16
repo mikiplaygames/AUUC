@@ -10,7 +10,7 @@ public static class ButtonWithTextMenu
     private static void CreateButtonWithText(MenuCommand menuCommand)
     {
         // Find/create Canvas
-        Canvas canvas = Object.FindFirstObjectByType<Canvas>();
+        Canvas canvas = Object.FindAnyObjectByType<Canvas>();
         if (canvas == null)
         {
             var canvasGO = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
@@ -20,7 +20,7 @@ public static class ButtonWithTextMenu
         }
 
         // Find/create EventSystem
-        if (Object.FindFirstObjectByType<EventSystem>() == null)
+        if (Object.FindAnyObjectByType<EventSystem>() == null)
         {
             var es = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
             Undo.RegisterCreatedObjectUndo(es, "Create EventSystem");
