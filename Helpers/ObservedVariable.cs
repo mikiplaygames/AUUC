@@ -3,7 +3,14 @@ using UnityEngine.Events;
 [System.Serializable]
 public class ObservedVariable<T>
 {
-    [System.NonSerialized]public UnityEvent<T> OnValueChanged = new();
+    public UnityEvent<T> OnValueChanged
+    {
+        get { 
+            onValueChanged ??= new UnityEvent<T>();
+            return onValueChanged; 
+        }
+    }
+    [System.NonSerialized]private UnityEvent<T> onValueChanged = new();
     [UnityEngine.SerializeField]private T _value;
     public void _QuietSetValue(T newValue) => _value = newValue;
     public ObservedVariable(T initialValue = default)
