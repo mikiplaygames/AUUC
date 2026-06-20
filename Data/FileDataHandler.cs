@@ -54,4 +54,17 @@ public class FileDataHandler<T> {
             Debug.LogError("Failed to load data from file: " + fullPath + e.Message);
         }
     }
+    public virtual void Delete()
+    {
+        string fullPath = Path.Combine(dataPath, dataFileName);
+        try
+        {
+            if (File.Exists(fullPath))
+                File.Delete(fullPath);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("Failed to delete data file: " + fullPath + e.Message);
+        }
+    }
 }
