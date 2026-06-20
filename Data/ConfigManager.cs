@@ -9,32 +9,24 @@ public static class ConfigManager
     static bool ShouldFallback => ConfigLoaded && _configData.UseHardcoded;
     static readonly string FileName = $"{ConfigData.GAME_NAME}_config.json";
     #if UNITY_ANDROID
-    static readonly string FilePath = System.IO.Path.Combine(Application.persistentDataPath, "Config");
+    static string FilePath => System.IO.Path.Combine(Application.persistentDataPath, "Config");
     #else
-    static readonly string FilePath = System.IO.Path.Combine(Application.streamingAssetsPath, "Config");
+    static string FilePath => System.IO.Path.Combine(Application.streamingAssetsPath, "Config");
     #endif
-    public static ConfigData ConfigData {
-        get
-        {
-            if (_configData == null)
-                LoadConfigData();
-            return _configData;
-        }
-    }
+    public static ConfigData ConfigData => _configData;
     private static ConfigData _configData;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Initialize()
     {
-        if (_configData == null)
-            LoadConfigData();
+        LoadConfigData();
     }
     public static async void LoadConfigData()
     {
         dataHandler ??= new(FilePath, FileName);
         _configData = dataHandler.Load();
 
-        if ((!ConfigLoaded || _configData.UseOnlineConfig) && Application.isPlaying)
+        if (!ConfigLoaded || _configData.UseOnlineConfig)
             await TryLoadOnlineConfig(ShouldFallback);
         else if (!_configData.UseHardcoded)
             return;
@@ -62,13 +54,12 @@ public static class ConfigManager
     public static void DeleteConfigData()
     {
         dataHandler ??= new(FilePath, FileName);
-        _configData = new();
-        dataHandler.Save(_configData);
+        dataHandler.Save(new());
+        _configData = null;
     }   
     public async static void RefetchOnlineConfig()
     {
-        if (Application.isPlaying)
-            await TryLoadOnlineConfig(true);
+        await TryLoadOnlineConfig(true);
     }
 }
 public class OnlineJsonFetcher<T> where T : class
@@ -76,7 +67,7 @@ public class OnlineJsonFetcher<T> where T : class
     public async Task<T> FetchJson()
     {
         UnityWebRequest request = UnityWebRequest.Get(ConfigData.ONLINE_CONFIG_URL);
-        request.timeout = 10;
+        request.timeout = 5;
         await request.SendWebRequest();
         if (request.result == UnityWebRequest.Result.Success)
         {
