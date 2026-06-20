@@ -15,8 +15,10 @@ public class GameDataManager
     
     public static UnityEvent<GameData> OnDataLoaded = new();
     public static UnityEvent<GameData> OnDataSaved = new();
+    #if !SAVESYSTEM_MANUAL_INIT
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void Initialize()
+    #endif
+    public static void Initialize()
     {
         dataHandler = new GameDataHandler();
         SceneManager.sceneLoaded += SceneLoaded;
@@ -28,7 +30,7 @@ public class GameDataManager
     }
     public static void NewGame()
     {
-        gameData = new GameData();
+        gameData = new(true);
         dataHandler.Save(gameData);
     }
     public static void LoadGame()
@@ -56,7 +58,7 @@ public class GameDataManager
     {
         RefreshSceneDataPersistenceObjects();
 
-        gameData = new();
+        gameData = new(false);
 
         var objectsToSave = sceneDataPersistentObjects.Concat(offSceneDataPersistentObjects);
         foreach (IDataPersistence<GameData> dataPersistenceObject in objectsToSave)
@@ -73,7 +75,7 @@ public class GameDataManager
     {
         RefreshSceneDataPersistenceObjects();
 
-        gameData = new();
+        gameData = new(false);
 
         var objectsToSave = sceneDataPersistentObjects.Concat(offSceneDataPersistentObjects);
         foreach (IDataPersistence<GameData> dataPersistenceObject in objectsToSave)
