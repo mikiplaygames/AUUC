@@ -75,8 +75,6 @@ public class GameDataManager
     {
         RefreshSceneDataPersistenceObjects();
 
-        gameData = new(false);
-
         var objectsToSave = sceneDataPersistentObjects.Concat(offSceneDataPersistentObjects);
         foreach (IDataPersistence<GameData> dataPersistenceObject in objectsToSave)
         {
