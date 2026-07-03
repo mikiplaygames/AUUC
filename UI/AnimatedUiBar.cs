@@ -2,15 +2,16 @@ using UnityEngine;
 
 public class AnimatedUiBar : UiBar {
     Coroutine animateCoroutine;
-    public void AnimateProgress(float duration)
+    public void AnimateProgress(float duration, float timeAlreadyElapsed = 0)
     {
+        if (!gameObject.activeInHierarchy)
+            return;
         if (animateCoroutine != null)
             StopCoroutine(animateCoroutine);
-        animateCoroutine = StartCoroutine(AnimateProgressCoroutine(duration));
+        animateCoroutine = StartCoroutine(AnimateProgressCoroutine(duration, timeAlreadyElapsed));
     }
-    private System.Collections.IEnumerator AnimateProgressCoroutine(float duration)
+    private System.Collections.IEnumerator AnimateProgressCoroutine(float duration, float elapsedTime)
     {
-        float elapsedTime = 0f;
         while (elapsedTime < duration)
         {
             elapsedTime += Time.deltaTime;
