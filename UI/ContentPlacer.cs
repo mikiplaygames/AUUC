@@ -4,6 +4,7 @@ public class ContentPlacer : MonoBehaviour
 {
     [SerializeField] bool listLike;
     [SerializeField] bool excludeInactive;
+    [SerializeField] bool autoCenter;
     [SerializeField] Vector2 startOffset;
     [SerializeField] protected float rowSpacing;
     [SerializeField] protected int colCount;
@@ -21,6 +22,11 @@ public class ContentPlacer : MonoBehaviour
     }
     public void RecalculatePositions()
     {
+        if (autoCenter)
+        {
+            startOffset.x = -((colCount - 1) * colSpacing) / 2f;
+            startOffset.y = ((transform.childCount / colCount - 1) * rowSpacing);
+        }
         int index = 0;
         int colIndex = 0;
         Vector2 prevPos = new(startOffset.x, startOffset.y + rowSpacing);
