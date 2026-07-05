@@ -9,7 +9,7 @@ public class ContentPlacer : MonoBehaviour
     [SerializeField] protected float rowSpacing;
     [SerializeField] protected int colCount;
     [SerializeField] protected float colSpacing;
-
+    bool shouldRecalculate = false;
 #if UNITY_EDITOR
     private void OnValidate()
     {
@@ -20,12 +20,30 @@ public class ContentPlacer : MonoBehaviour
     {
         RecalculatePositions();
     }
-    public void RecalculatePositions()
+    private void OnEnable() {
+        if (!shouldRecalculate) return;
+        RecalculatePositions(true);
+    }
+    public void RecalculatePositions(bool force = false)
     {
+        if (!gameObject.activeInHierarchy && !force)
+        {
+            shouldRecalculate = true;
+            return;
+        }
+        shouldRecalculate = false;
         if (autoCenter)
         {
+            int activeChildCount = 0;
+            if (excludeInactive)
+            {
+                foreach (Transform child in transform)
+                    activeChildCount+= excludeInactive && !child.gameObject.activeInHierarchy ? 0 : 1;
+            }
+            else
+                activeChildCount = transform.childCount;
             startOffset.x = -((colCount - 1) * colSpacing) / 2f;
-            startOffset.y = ((transform.childCount / colCount - 1) * rowSpacing);
+            startOffset.y = (activeChildCount / colCount - 1) * rowSpacing;
         }
         int index = 0;
         int colIndex = 0;
@@ -34,7 +52,7 @@ public class ContentPlacer : MonoBehaviour
 
         foreach (Transform child in transform)
         {
-            if (excludeInactive && !child.gameObject.activeInHierarchy)
+            if (excludeInactive && !child.gameObject.activeSelf)
                 continue;
 
             if (colCount-1 > 0 && index > 0 && colIndex < colCount-1 && index % colCount-1 >= 0)
