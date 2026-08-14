@@ -7,7 +7,7 @@ namespace MikiHeadDev.Helpers
 public class AdvancedObjectPool<T> : IDisposable, IObjectPool<T> where T : class
 {
     internal readonly List<T> a_List;
-    internal readonly List<T> i_List;
+    internal readonly Stack<T> i_List;
 
     private readonly Func<T> m_CreateFunc;
     private readonly Action<T> m_ActionOnGet;
@@ -36,14 +36,11 @@ public class AdvancedObjectPool<T> : IDisposable, IObjectPool<T> where T : class
     }
     public AdvancedObjectPool(Func<T> createFunc, Action<T> actionOnGet = null, Action<T> actionOnRelease = null, Action<T> actionOnDestroy = null, bool collectionCheck = true, int defaultCapacity = 10, int maxSize = 10000)
         {
-            if (createFunc == null)
-                throw new ArgumentNullException("createFunc");
-
             if (maxSize <= 0)
                 throw new ArgumentException("Max Size must be greater than 0", "maxSize");
 
-            i_List = new List<T>(defaultCapacity);
-            a_List = new List<T>(defaultCapacity);
+            i_List = new(defaultCapacity);
+            a_List = new(defaultCapacity);
             m_CreateFunc = createFunc;
             m_MaxSize = maxSize;
             m_ActionOnGet = actionOnGet;
@@ -54,15 +51,8 @@ public class AdvancedObjectPool<T> : IDisposable, IObjectPool<T> where T : class
 
     public T Get()
     {
-        T val;
-        if (i_List.Count == 0)
+        if (!i_List.TryPop(out T val))
             val = m_CreateFunc();
-        else
-        {
-            int index = i_List.Count - 1;
-            val = i_List[index];
-            i_List.RemoveAt(index);
-        }
 
         m_ActionOnGet?.Invoke(val);
         a_List.Add(val);
@@ -75,9 +65,9 @@ public class AdvancedObjectPool<T> : IDisposable, IObjectPool<T> where T : class
     {
         if (m_CollectionCheck && i_List.Count > 0)
         {
-            for (int i = 0; i < i_List.Count; i++)
+            foreach (var item in i_List)
             {
-                if (element == i_List[i])
+                if (ReferenceEquals(item, element))
                     throw new InvalidOperationException("Trying to release an object that has already been released to the pool.");
             }
         }
@@ -86,7 +76,7 @@ public class AdvancedObjectPool<T> : IDisposable, IObjectPool<T> where T : class
         if (CountInactive < m_MaxSize)
         {
             a_List.Remove(element);
-            i_List.Add(element);
+            i_List.Push(element);
             return;
         }
 
