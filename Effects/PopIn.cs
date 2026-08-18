@@ -44,7 +44,7 @@ public class PopIn : MonoBehaviour
     {
         transform.localScale = defaultScale * pullOutScaleMultiplier;
         LeanTween.scale(gameObject, defaultScale, duration)
-            .setEase(pullOutEaseOutType)
+            .setEase(pullInEaseType)
             .setOnComplete(() => OnPopOutFinished?.Invoke());
     }
     
