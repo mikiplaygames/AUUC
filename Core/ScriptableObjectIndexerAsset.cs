@@ -6,8 +6,11 @@ using UnityEditor;
 
 public class ScriptableObjectIndexerAsset : ScriptableObject
 {
-    [SerializeField] private SerializableDictionary<string, int> TypeStartingIds;
-    [SerializeField] private SerializableDictionary<int, AdvancedScriptableObject> MainIdsObjects;
+    // FIX: give these default values so the dictionaries are never null,
+    // e.g. right after CreateInstance<T>() before Unity has serialized/deserialized the asset.
+    [SerializeField] private SerializableDictionary<string, int> TypeStartingIds = new();
+    [SerializeField] private SerializableDictionary<int, AdvancedScriptableObject> MainIdsObjects = new();
+
     public const string Path = "Assets/Resources/DoNotMoveThisFile.asset"; //todo DO NOT MOVE THIS FILE
     public const string FileName = "DoNotMoveThisFile";
     public T GetObject<T>(int id) where T : AdvancedScriptableObject
@@ -18,9 +21,10 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
     }
     public int GetIdOfObject<T>(T obj) where T : AdvancedScriptableObject
     {
+        if (obj == null) return default;
         foreach (var kvp in MainIdsObjects)
         {
-            if (kvp.Value.Equals(obj))
+            if (kvp.Value != null && kvp.Value.Equals(obj))
                 return kvp.Key;
         }
         return default;
@@ -29,7 +33,7 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
     {
         foreach (var kvp in MainIdsObjects)
         {
-            if (kvp.Value.name.Equals(name))
+            if (kvp.Value != null && kvp.Value.name.Equals(name))
                 return kvp.Key;
         }
         return default;
@@ -117,7 +121,7 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
     {
         var allAssets = Resources
             .FindObjectsOfTypeAll<AdvancedScriptableObject>()
-            .Where(x => x != null)
+            .Where(x => x != null && x.Id != 0)
             .ToList();
 
         return allAssets
@@ -131,6 +135,11 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
         foreach (var item in MainIdsObjects)
         {
             if (item.Value == null) continue;
+            if (tempDict.ContainsKey(item.Value.Id))
+            {
+                Debug.LogError($"Duplicate ID {item.Value.Id} between {tempDict[item.Value.Id].name} and {item.Value.name} while regenerating IDs. Skipping {item.Value.name} - fix the conflict manually.");
+                continue;
+            }
             tempDict.Add(item.Value.Id, item.Value);
         }
         MainIdsObjects = new(tempDict.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value));
@@ -140,7 +149,7 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
         var types = GetAllSortedTypes();
         types.Where(t => !TypeStartingIds.ContainsKey(t.FullName)).ToList().ForEach(t =>
         {
-            int newBaseId = TypeStartingIds.Values.Count > 0 ? TypeStartingIds.Values.Max() + 1000 : 1;
+            int newBaseId = TypeStartingIds.Values.Count > 0 ? TypeStartingIds.Values.Max() + 1000 : 0;
             TypeStartingIds.Add(t.FullName, newBaseId);
         });
         TypeStartingIds.Where(kvp => !types.Any(t => t.FullName == kvp.Key)).Select(kvp => kvp.Key).ToList().ForEach(key =>
@@ -163,25 +172,34 @@ public class ScriptableObjectIndexerAsset : ScriptableObject
     {
         UpdateTypesBaseIds_SOFT();
         SerializableDictionary<int, AdvancedScriptableObject> tempNewDict = new(MainIdsObjects);
+        var listedObjects = new HashSet<AdvancedScriptableObject>(tempNewDict.Values);
         var allNewFoundObjects = GetObjectsSortedByType();
-        
+
         foreach (var kvp in allNewFoundObjects)
         {
             foreach (var obj in kvp.Value)
             {
-                if (!tempNewDict.ContainsValue(obj))
+                if (listedObjects.Contains(obj))
+                    continue;
+
+                int newId = obj.Id != 0
+                    ? obj.Id
+                    : (kvp.Value.Any(x => x.Id != 0)
+                        ? kvp.Value.Max(x => x.Id) + 1
+                        : TypeStartingIds[kvp.Key.FullName] + 1);
+
+                if (tempNewDict.TryGetValue(newId, out var val))
                 {
-                    int newId = obj.Id != 0 ? obj.Id : kvp.Value.Sum(x => x.Id) > 0 ? kvp.Value.Max(x => x.Id) + 1 : TypeStartingIds[kvp.Key.FullName] + 1;
-                    if (tempNewDict.TryGetValue(newId, out var val))
-                    {
-                        Debug.Log($"ID conflict for object {obj.name} with ID {newId} already used by {val.name}. Use \"Check For Unlisted Objects\" function in the indexer");
-                        continue;
-                    }
-                    tempNewDict.Add(newId, obj);
-                    if (obj.Id == newId) continue;
-                    obj.SetNewId(newId);
-                    EditorUtility.SetDirty(obj);
+                    Debug.LogWarning($"ID conflict for object {obj.name} with ID {newId} already used by {val.name}. Use \"Check For Unlisted Objects\" function in the indexer");
+                    continue;
                 }
+
+                tempNewDict.Add(newId, obj);
+                listedObjects.Add(obj);
+
+                if (obj.Id == newId) continue;
+                obj.SetNewId(newId);
+                EditorUtility.SetDirty(obj);
             }
         }
         MainIdsObjects = new(tempNewDict.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value));
