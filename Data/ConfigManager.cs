@@ -1,3 +1,4 @@
+#if USE_DEFAULT_CONFIGSYSTEM
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -79,3 +80,4 @@ public class OnlineJsonFetcher<T> where T : class
         return null;
     }
 }
+#endif

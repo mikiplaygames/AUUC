@@ -1,3 +1,4 @@
+#if USE_DEFAULT_SAVESYSTEM
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -92,3 +93,4 @@ public class GameDataManager
         sceneDataPersistentObjects = SceneManager.GetActiveScene().GetRootGameObjects().SelectMany(go => go.GetComponentsInChildren<IDataPersistence<GameData>>(true));
     }
 }}
+#endif
