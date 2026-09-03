@@ -2,7 +2,8 @@ using UnityEngine;
 using System.IO;
 using System;
 
-public class FileDataHandler<T> {
+public class FileDataHandler<T>
+{
     protected string dataPath;
     protected string dataFileName;
     public FileDataHandler(string path, string fileName)
@@ -13,25 +14,24 @@ public class FileDataHandler<T> {
     public virtual T Load()
     {
         string fullPath = Path.Combine(dataPath, dataFileName);
-
         T loadedData = default;
 
-        if (File.Exists(fullPath))
+        if (!File.Exists(fullPath))
+            return loadedData;
+
+        try
         {
-            try
-            {
-                string dataToLoad = "";
-                using (FileStream stream = new(fullPath, FileMode.Open))
-                {
-                    using StreamReader reader = new(stream);
-                    dataToLoad = reader.ReadToEnd();
-                }
-                loadedData = JsonUtility.FromJson<T>(dataToLoad);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError("Could not load game data: " + e.Message);
-            }
+            string dataToLoad = File.ReadAllText(fullPath);
+            if (string.IsNullOrWhiteSpace(dataToLoad))
+                return loadedData;
+
+            loadedData = JsonUtility.FromJson<T>(dataToLoad);
+            if (loadedData == null)
+                Debug.LogWarning($"Snapshot file {fullPath} deserialized to null.");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Could not load game data from {fullPath}: {e.Message}");
         }
 
         return loadedData;
@@ -42,16 +42,18 @@ public class FileDataHandler<T> {
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
-
+            string tempPath = fullPath + ".tmp";
             string dataToStore = JsonUtility.ToJson(data, true);
 
-            using FileStream stream = new(fullPath, FileMode.Create);
-            using StreamWriter writer = new(stream);
-            writer.Write(dataToStore);
+            File.WriteAllText(tempPath, dataToStore);
+            if (File.Exists(fullPath))
+                File.Replace(tempPath, fullPath, fullPath + ".bak");
+            else
+                File.Move(tempPath, fullPath);
         }
         catch (Exception e)
         {
-            Debug.LogError("Failed to load data from file: " + fullPath + e.Message);
+            Debug.LogError($"Failed to save data to file: {fullPath}. {e.Message}");
         }
     }
     public virtual void Delete()
@@ -61,10 +63,18 @@ public class FileDataHandler<T> {
         {
             if (File.Exists(fullPath))
                 File.Delete(fullPath);
+
+            string backupPath = fullPath + ".bak";
+            if (File.Exists(backupPath))
+                File.Delete(backupPath);
+
+            string tempPath = fullPath + ".tmp";
+            if (File.Exists(tempPath))
+                File.Delete(tempPath);
         }
         catch (Exception e)
         {
-            Debug.LogError("Failed to delete data file: " + fullPath + e.Message);
+            Debug.LogError($"Failed to delete data file: {fullPath}. {e.Message}");
         }
     }
 }
