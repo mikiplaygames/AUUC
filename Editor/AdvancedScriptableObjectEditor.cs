@@ -1,6 +1,7 @@
 using UnityEditor;
 
 [CustomEditor(typeof(AdvancedScriptableObject), true)]
+[CanEditMultipleObjects]
 public class AdvancedScriptableObjectEditor : Editor {
     public override void OnInspectorGUI() {
         serializedObject.Update();
